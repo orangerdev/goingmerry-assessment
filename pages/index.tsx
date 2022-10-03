@@ -3,7 +3,7 @@ import Head from "next/head"
 import { useEffect, useState, useRef } from "react"
 import TimeComponent from "../components/Time"
 import TimeDiffComponent from "../components/TimeDiff"
-import { Button, Modal, Input, Select } from "antd"
+import { Button, Modal, Input } from "antd"
 import { getTime } from "../helpers/time"
 import AppContext from "../context/AppContext"
 import { includes } from "lodash"
@@ -23,20 +23,15 @@ const timeZoneOptions = [
   { timezone: "America/Los_Angeles", title: "Los Angeles" },
 ]
 
-const { Option } = Select
-
-const Home: NextPage<any> = (props) => {
-  const { localTime } = props
+const Home: NextPage<any> = () => {
   const titleRef = useRef("")
   const timezoneRef = useRef("")
-  const utcTimeStamp = new Date(
-    new Date(localTime.utc_datetime).toISOString()
-  ).getTime()
 
+  const [localTime, setLocalTime] = useState<any>(undefined)
   const [timeZones, setTimeZones] = useState<any>([])
   const [timeZonesArray, setTimeZonesArray] = useState<string[]>([])
   const [otherTimes, setOtherTimes] = useState<any>([])
-  const [unixTimestamp, setUnixTimestamp] = useState(utcTimeStamp)
+  const [unixTimestamp, setUnixTimestamp] = useState<number>(0)
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false)
 
   const TikTokTikTok = () => {
@@ -53,27 +48,16 @@ const Home: NextPage<any> = (props) => {
   }, [unixTimestamp])
 
   useEffect(() => {
-    TikTokTikTok()
+    getTime("Asia/Jakarta").then((localTimeData) => {
+      setLocalTime(localTimeData)
+      setUnixTimestamp(
+        new Date(new Date(localTimeData.utc_datetime).toISOString()).getTime()
+      )
+    })
   }, [])
 
   useEffect(() => {
-    if (timeZones.length > 0) {
-      const temp: any = []
-      Promise.all(
-        timeZones.map((timeZone: any) => {
-          getTime(timeZone.timezone).then((data) => {
-            const location = timeZoneOptions.find((option: any) => {
-              return timeZone.timezone === option.timezone
-            })
-
-            temp.push({ ...data, title: timeZone.title, location })
-            if (temp.length === timeZones.length) {
-              setOtherTimes(temp)
-            }
-          })
-        })
-      )
-    } else {
+    if (timeZones.length < 0) {
       setOtherTimes([])
     }
 
@@ -88,10 +72,15 @@ const Home: NextPage<any> = (props) => {
           const newTimeZones = timeZones.filter(
             (timeZone: any) => timeZone.timezone !== timezone
           )
+          const newOtherTimes = otherTimes.filter(
+            (timeZone: any) => timeZone.timezone !== timezone
+          )
+
           setTimeZones(newTimeZones)
           setTimeZonesArray((prevData) =>
             prevData.filter((data) => data !== timezone)
           )
+          setOtherTimes(newOtherTimes)
         },
       }}
     >
@@ -103,26 +92,27 @@ const Home: NextPage<any> = (props) => {
         </Head>
 
         <main className={styles.main}>
-          <TimeComponent
-            {...localTime}
-            unixtime={unixTimestamp}
-            title="Jakarta"
-          />
+          {localTime !== undefined && (
+            <>
+              <TimeComponent
+                {...localTime}
+                unixtime={unixTimestamp}
+                title="Jakarta"
+              />
 
-          <Button
-            className="mb-4 rounded"
-            onClick={() => {
-              if (timeZonesArray.length >= 4) {
-                alert("Reach limit to 4 cards")
-                return
-              }
-              setIsModalOpen(true)
-            }}
-          >
-            Add New Time Zone
-          </Button>
+              <Button
+                role="add-new-card"
+                className="mb-4 rounded"
+                onClick={() => {
+                  setIsModalOpen(true)
+                }}
+              >
+                Add New Time Zone
+              </Button>
+            </>
+          )}
 
-          <div className="flex">
+          <div id="otherTimes-container" className="flex">
             {otherTimes.length > 0 &&
               otherTimes.map((otherTime: any, index: number) => {
                 return (
@@ -138,34 +128,68 @@ const Home: NextPage<any> = (props) => {
           <Modal
             title="Add New Timezone Card"
             open={isModalOpen}
-            onOk={() => {
-              if (titleRef.current === "") {
-                alert("Please fill the title")
-                return
-              }
-              if (timezoneRef.current === "") {
-                alert("You must choose a timezone")
-                return
-              } else if (includes(timeZonesArray, timezoneRef.current)) {
-                alert("You have already added this timezone")
-                return
-              }
+            closable={false}
+            footer={
+              <>
+                <button
+                  type="button"
+                  className="ant-btn ant-btn-default"
+                  onClick={() => {
+                    setIsModalOpen(false)
+                  }}
+                >
+                  <span>Cancel</span>
+                </button>
+                <button
+                  type="button"
+                  id="submitNewCard"
+                  className="ant-btn ant-btn-primary"
+                  onClick={() => {
+                    console.log("limitt", otherTimes)
+                    if (otherTimes.length >= 4) {
+                      alert("Limit to 4 cards")
+                      return
+                    } else if (titleRef.current === "") {
+                      alert("Please fill the title")
+                      return
+                    } else if (timezoneRef.current === "") {
+                      alert("You must choose a timezone")
+                      return
+                    } else if (includes(timeZonesArray, timezoneRef.current)) {
+                      alert("You have already added this timezone")
+                      return
+                    }
 
-              setTimeZones((prevData: any) => [
-                ...prevData,
-                { timezone: timezoneRef.current, title: titleRef.current },
-              ])
+                    getTime(timezoneRef.current).then((data) => {
+                      const location = timeZoneOptions.find((option: any) => {
+                        return timezoneRef.current === option.timezone
+                      })
 
-              setTimeZonesArray((prevData) => [
-                ...prevData,
-                timezoneRef.current,
-              ])
-              setIsModalOpen(false)
-            }}
-            onCancel={() => {
-              setIsModalOpen(false)
-            }}
-            okText="Add"
+                      setOtherTimes((prevData: any) => [
+                        ...prevData,
+                        { ...data, location, title: titleRef.current },
+                      ])
+                    })
+
+                    setTimeZones((prevData: any) => [
+                      ...prevData,
+                      {
+                        timezone: timezoneRef.current,
+                        title: titleRef.current,
+                      },
+                    ])
+
+                    setTimeZonesArray((prevData) => [
+                      ...prevData,
+                      timezoneRef.current,
+                    ])
+                    setIsModalOpen(false)
+                  }}
+                >
+                  <span>Add</span>
+                </button>
+              </>
+            }
           >
             <div className="mb-4">
               <label className="block mb-2" htmlFor="titleCard">
@@ -177,44 +201,39 @@ const Home: NextPage<any> = (props) => {
                 onChange={(e) => {
                   titleRef.current = e.target.value
                 }}
+                maxLength={20}
               />
             </div>
             <div className="mb-4">
               <label className="block mb-2" htmlFor="timeZoneCard">
                 Timezone
               </label>
-              <Select
+              <select
                 id="timeZoneCard"
                 style={{ width: "100%" }}
                 defaultValue=""
-                onChange={(value) => {
-                  timezoneRef.current = value
+                onChange={(e) => {
+                  timezoneRef.current = e.target.value
                 }}
+                className="bg-white border p-2"
               >
+                <option value="">Choose a Timezone</option>
                 {timeZoneOptions.map((option: any, index: number) => (
-                  <Option
+                  <option
                     key={`option-${index}`}
                     value={option.timezone}
                     disabled={includes(timeZonesArray, option.timezone)}
                   >
                     {option.title}
-                  </Option>
+                  </option>
                 ))}
-              </Select>
+              </select>
             </div>
           </Modal>
         </main>
       </div>
     </AppContext.Provider>
   )
-}
-
-export const getServerSideProps = async () => {
-  const localTime = await getTime("Asia/Jakarta")
-
-  return {
-    props: { localTime },
-  }
 }
 
 export default Home

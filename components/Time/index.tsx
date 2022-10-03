@@ -18,7 +18,9 @@ const TimeComponent: FunctionComponent<Props> = (props) => {
 
   return (
     <div className="text-center">
-      <h1 className="leading-6 text-2xl">{title}</h1>
+      <h1 className="leading-6 text-2xl" role="heading">
+        {title}
+      </h1>
       <h3 className="text-8xl py-8">{hour}</h3>
     </div>
   )

@@ -6,24 +6,20 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@types/lodash": "^4.14.186",
-    "@types/react-slick": "^0.23.10",
-    "@types/styled-components": "^5.1.26",
     "antd": "^4.23.3",
     "axios": "^0.27.2",
-    "axios-cache-adapter": "^2.7.3",
     "lodash": "^4.17.21",
     "next": "12.3.1",
-    "pokedex-promise-v2": "^4.0.0",
     "react": "18.2.0",
-    "react-device-detect": "^2.2.2",
-    "react-dom": "18.2.0",
-    "styled-components": "^5.3.6"
+    "react-dom": "18.2.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.26.1",
     "@types/node": "18.7.23",
     "@types/react": "18.0.21",
     "@types/react-dom": "18.0.6",

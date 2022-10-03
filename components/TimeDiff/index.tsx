@@ -66,7 +66,7 @@ const TimeDiffComponent: FunctionComponent<TimeDiffInterface> = (props) => {
 
   // console.log(localUnixtime, unixtime)
   return (
-    <div className="relative border border-black text-center py-4 px-6 mx-2">
+    <div className="otherTime-card relative border border-black text-center py-4 px-6 mx-2">
       <span
         className="absolute cursor-pointer top-0 right-1"
         onClick={() => context.removeTimeZoneCard(timezone)}
@@ -74,7 +74,7 @@ const TimeDiffComponent: FunctionComponent<TimeDiffInterface> = (props) => {
         x
       </span>
       <h1 className="leading-6 text-xl">{location.title}</h1>
-      <h1 className="leading-6 text-sm">{title}</h1>
+      <h2 className="leading-6 text-sm">{title}</h2>
       <h3 className="text-4xl">{hour}</h3>
       <h4>{abbreviation}</h4>
       <span>
