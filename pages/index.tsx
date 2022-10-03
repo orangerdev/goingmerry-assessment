@@ -6,7 +6,7 @@ import TimeDiffComponent from "../components/TimeDiff"
 import { Button, Modal, Input, Select } from "antd"
 import { getTime } from "../helpers/time"
 import AppContext from "../context/AppContext"
-import { includes, template } from "lodash"
+import { includes } from "lodash"
 import styles from "../styles/Home.module.css"
 import "antd/dist/antd.css"
 
@@ -62,7 +62,11 @@ const Home: NextPage<any> = (props) => {
       Promise.all(
         timeZones.map((timeZone: any) => {
           getTime(timeZone.timezone).then((data) => {
-            temp.push({ ...data, title: timeZone.title })
+            const location = timeZoneOptions.find((option: any) => {
+              return timeZone.timezone === option.timezone
+            })
+
+            temp.push({ ...data, title: timeZone.title, location })
             if (temp.length === timeZones.length) {
               setOtherTimes(temp)
             }
@@ -79,6 +83,7 @@ const Home: NextPage<any> = (props) => {
   return (
     <AppContext.Provider
       value={{
+        timeZoneOptions,
         removeTimeZoneCard: (timezone: string) => {
           const newTimeZones = timeZones.filter(
             (timeZone: any) => timeZone.timezone !== timezone
@@ -120,12 +125,11 @@ const Home: NextPage<any> = (props) => {
           <div className="flex">
             {otherTimes.length > 0 &&
               otherTimes.map((otherTime: any, index: number) => {
-                // console.log(otherTime)
                 return (
                   <TimeDiffComponent
                     key={`time-${index}`}
                     {...otherTime}
-                    unixtime={unixTimestamp}
+                    localUnixtime={unixTimestamp}
                   />
                 )
               })}
@@ -135,6 +139,10 @@ const Home: NextPage<any> = (props) => {
             title="Add New Timezone Card"
             open={isModalOpen}
             onOk={() => {
+              if (titleRef.current === "") {
+                alert("Please fill the title")
+                return
+              }
               if (timezoneRef.current === "") {
                 alert("You must choose a timezone")
                 return
@@ -161,7 +169,7 @@ const Home: NextPage<any> = (props) => {
           >
             <div className="mb-4">
               <label className="block mb-2" htmlFor="titleCard">
-                Title
+                Card Title
               </label>
               <Input
                 placeholder="Basic usage"
@@ -183,9 +191,6 @@ const Home: NextPage<any> = (props) => {
                   timezoneRef.current = value
                 }}
               >
-                {/* <Option key="option-x" value="">
-                Choose a time zone
-              </Option> */}
                 {timeZoneOptions.map((option: any, index: number) => (
                   <Option
                     key={`option-${index}`}
@@ -206,6 +211,7 @@ const Home: NextPage<any> = (props) => {
 
 export const getServerSideProps = async () => {
   const localTime = await getTime("Asia/Jakarta")
+
   return {
     props: { localTime },
   }
