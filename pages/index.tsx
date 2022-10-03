@@ -1,9 +1,56 @@
-import type { NextPage } from 'next'
-import Head from 'next/head'
-import Image from 'next/image'
-import styles from '../styles/Home.module.css'
+import type { NextPage } from "next"
+import Head from "next/head"
+import { useEffect, useState } from "react"
+import TimeComponent from "../components/Time"
+import TimeDiffComponent from "../components/TimeDiff"
+import { getTime } from "../helpers/time"
+import styles from "../styles/Home.module.css"
 
-const Home: NextPage = () => {
+const Home: NextPage<any> = (props) => {
+  const { localTime } = props
+  const utcTimeStamp = new Date(
+    new Date(localTime.utc_datetime).toISOString()
+  ).getTime()
+
+  const timeZones = [
+    { timezone: "Asia/Singapore", title: "Singapore" },
+    { timezone: "Asia/Tokyo", title: "Tokyo" },
+    { timezone: "Australia/Melbourne", title: "Melbourne" },
+    { timezone: "America/New_York", title: "New York" },
+  ]
+
+  const [otherTimes, setOtherTimes] = useState<any>([])
+  const [unixTimestamp, setUnixTimestamp] = useState(utcTimeStamp)
+
+  const TikTokTikTok = () => {
+    const time = setTimeout(() => {
+      setUnixTimestamp((prevData) => prevData + 1000)
+    }, 1000)
+    return () => {
+      clearTimeout(time)
+    }
+  }
+
+  useEffect(() => {
+    TikTokTikTok()
+  }, [unixTimestamp])
+
+  useEffect(() => {
+    TikTokTikTok()
+  }, [])
+
+  useEffect(() => {
+    const timeZonesTemp: string[] = []
+    timeZones.map((timeZone) => {
+      getTime(timeZone.timezone).then((data) => {
+        timeZonesTemp.push(data)
+      })
+
+      setOtherTimes(timeZonesTemp)
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   return (
     <div className={styles.container}>
       <Head>
@@ -13,60 +60,35 @@ const Home: NextPage = () => {
       </Head>
 
       <main className={styles.main}>
-        <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
-        </h1>
+        <TimeComponent
+          {...localTime}
+          unixtime={unixTimestamp}
+          title="Jakarta"
+        />
 
-        <p className={styles.description}>
-          Get started by editing{' '}
-          <code className={styles.code}>pages/index.tsx</code>
-        </p>
-
-        <div className={styles.grid}>
-          <a href="https://nextjs.org/docs" className={styles.card}>
-            <h2>Documentation &rarr;</h2>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
-
-          <a href="https://nextjs.org/learn" className={styles.card}>
-            <h2>Learn &rarr;</h2>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
-
-          <a
-            href="https://github.com/vercel/next.js/tree/canary/examples"
-            className={styles.card}
-          >
-            <h2>Examples &rarr;</h2>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
-
-          <a
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-          >
-            <h2>Deploy &rarr;</h2>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
+        <div className="flex">
+          {otherTimes.length > 0 &&
+            otherTimes.map((otherTime: any, index: number) => {
+              // console.log(otherTime)
+              return (
+                <TimeDiffComponent
+                  key={`time-${index}`}
+                  {...otherTime}
+                  unixtime={unixTimestamp}
+                />
+              )
+            })}
         </div>
       </main>
-
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <span className={styles.logo}>
-            <Image src="/vercel.svg" alt="Vercel Logo" width={72} height={16} />
-          </span>
-        </a>
-      </footer>
     </div>
   )
+}
+
+export const getServerSideProps = async () => {
+  const localTime = await getTime("Asia/Jakarta")
+  return {
+    props: { localTime },
+  }
 }
 
 export default Home
