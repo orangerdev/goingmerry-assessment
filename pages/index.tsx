@@ -145,7 +145,6 @@ const Home: NextPage<any> = () => {
                   id="submitNewCard"
                   className="ant-btn ant-btn-primary"
                   onClick={() => {
-                    console.log("limitt", otherTimes)
                     if (otherTimes.length >= 4) {
                       alert("Limit to 4 cards")
                       return
